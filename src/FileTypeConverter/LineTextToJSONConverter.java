@@ -83,7 +83,7 @@ public class LineTextToJSONConverter {
     
     private String getFirstWord(String currLine) {
         for(int i = 0; i < currLine.length(); i++) {
-            if (currLine.charAt(i) == ' ' || currLine.charAt(i) == ',') {
+            if (currLine.charAt(i) == ' ' || currLine.charAt(i) == ',' || currLine.charAt(i) == '\t') {
                 return currLine.substring(0, i);
             }
         }
@@ -126,8 +126,14 @@ public class LineTextToJSONConverter {
     }
     
     private boolean isTimeWord(String firstWord) {
-        String hourString = firstWord.substring(HOUR_START_INDEX, HOUR_END_INDEX);
-        String minString = firstWord.substring(MIN_START_INDEX, MIN_END_INDEX);
+        String hourString;
+        String minString;
+        try {
+            hourString = firstWord.substring(HOUR_START_INDEX, HOUR_END_INDEX);
+            minString = firstWord.substring(MIN_START_INDEX, MIN_END_INDEX);
+        } catch (StringIndexOutOfBoundsException e) {
+            return false;
+        }
         
         try {
             int hour = Integer.parseInt(hourString);
@@ -157,22 +163,19 @@ public class LineTextToJSONConverter {
     }
     
     private void parseMessage(String messageLine) throws LineProcessingException {
-        Calendar messageTime = parseTime(getFirstWord(messageLine));
+        String firstWord = getFirstWord(messageLine);
+        Calendar messageTime = parseTime(firstWord);
         
         /// find participant name by searching for second space char after time
         int nameEndIndex = messageLine.length();
-        boolean foundSpace = false;
-        for (int i = 0; i < messageLine.length(); i++) {
-            if (messageLine.charAt(i) == ' ') {
-                if (foundSpace) {
-                    nameEndIndex = i;
-                    break;
-                }
-                else {
-                    foundSpace = true;
-                }
+        for (int i = firstWord.length() + 1; i < messageLine.length(); i++) {
+            if (messageLine.charAt(i) == '\t') {
+                nameEndIndex = i;
+                break;
+               
             }
         }
+        
         String participant = messageLine.substring(NAME_START_INDEX, nameEndIndex);
         participants.add(participant);
         
@@ -186,6 +189,57 @@ public class LineTextToJSONConverter {
     }
     
     public String getJsonText() {
-        return "";
+        String jsonText = "{\n";
+        
+        jsonText += getParticipantsText();
+        
+        jsonText += getMessagesText();
+        
+        jsonText += "}";
+        
+        return jsonText;
+    }
+    
+    private String getParticipantsText() {
+        String participantsText = "  \"participants\": [\n";
+        
+        for (String participant : participants) {
+            participantsText += "    {\n";
+            
+            participantsText += "      \"name\": \"" + participant + "\"\n";
+        
+            participantsText += "    },\n";
+        }
+        
+        participantsText = participantsText.substring(0, 
+                                participantsText.length() - 2);
+        participantsText += "\n";
+        
+        participantsText += "  ],\n";
+        return participantsText;
+    }
+    
+    private String getMessagesText() {
+        String messagesText = "  \"messages\": [\n";
+        
+        for (Message message : messages) {
+            messagesText += "    {\n";
+            
+            messagesText += "      \"sender_name\": \"" + message.getSender() + "\",\n";
+            messagesText += "      \"timestamp_ms\": " + message.getSendTime().getTimeInMillis() + ",\n";
+            messagesText += "      \"content\": \"" + message.getContent() + "\",\n";
+            messagesText += "      \"type\": \"Generic\"\n";
+            
+            messagesText += "    },\n";
+        
+        }
+        
+        messagesText = messagesText.substring(0, 
+                messagesText.length() - 2);
+        messagesText += "\n";
+        
+        messagesText += "  ]\n";
+
+        return messagesText;
     }
 }

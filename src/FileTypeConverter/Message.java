@@ -21,7 +21,7 @@ public class Message {
     public void setSendTime(Calendar sendTimeIn) { sendTime = sendTimeIn; }
     public void setSender(String senderIn) { sender = senderIn; }
     public void setMessage(String messageIn) { message = messageIn; }
-    public void setContent(ContentType contentTypeIn) { contentType = contentTypeIn; }
+    public void setContentType(ContentType contentTypeIn) { contentType = contentTypeIn; }
     
     public Message(Calendar timeIn, String senderIn, 
                    String messageIn, ContentType contentTypeIn) {

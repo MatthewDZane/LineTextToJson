@@ -20,6 +20,11 @@ public class ConverterRunner {
         try {
             inputFile = new File(inputFilePath);
             inputScanner = new Scanner(inputFile); 
+            
+            // skip first 3 line
+            inputScanner.nextLine();
+            inputScanner.nextLine();
+            inputScanner.nextLine();
         } catch (FileNotFoundException e) {
             System.out.println("File: " + inputFilePath + " not found");
             e.printStackTrace();
