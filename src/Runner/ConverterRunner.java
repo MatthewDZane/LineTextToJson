@@ -15,7 +15,7 @@ public class ConverterRunner {
         String inputFilePath = "src/InputFiles/" + inputFileName;
         File inputFile;
         Scanner inputScanner = null;
-        
+
         // Open input file
         try {
             inputFile = new File(inputFilePath);
@@ -25,10 +25,29 @@ public class ConverterRunner {
             e.printStackTrace();
             System.exit(1);
         }
-        
+
+        LineTextToJSONConverter converter = new LineTextToJSONConverter();
+        boolean noErrors = true;
+
+        // Read each line in text file
+        for (int lineNumber = 0; inputScanner.hasNextLine(); lineNumber++) {
+            String currLine = inputScanner.nextLine();
+            
+            // Process line
+            try {
+                converter.processLine(currLine);
+            } catch (LineProcessingException e) {
+                System.out.println("Line " + lineNumber + ": \"" + currLine +
+                        "\" could not be processed" );
+                noErrors = false;
+                continue;
+            }          
+        }
+
+        inputScanner.close();
+
         // Open output file
         // Replace txt extension with json 
-        
         String outputFileName = inputFileName.substring(0, inputFileName.length() - 3) + "json";
         String outputFilePath = "src/OutputFiles/" + outputFileName;
         FileWriter outputFile = null;
@@ -38,42 +57,25 @@ public class ConverterRunner {
             System.out.println("There was a problem opening file: " + outputFilePath);
             System.exit(1);
         }
-        
-        LineTextToJSONConverter converter = new LineTextToJSONConverter();
-        
-     // Read each line in text file
-        for (int lineNumber = 0; inputScanner.hasNextLine(); lineNumber++) {
-            String currLine = inputScanner.nextLine();
-            
-            String outputLine = "";
-            // Process line
-            try {
-                outputLine = converter.processLine(currLine);
-            } catch (LineProcessingException e) {
-                System.out.println("Line " + lineNumber + ": \"" + currLine +
-                                   "\" could not be processed" );
-                continue;
-            }
-            
-            // Write to output file
-            try {
-                outputFile.write(outputLine);
-            } catch (IOException e) {
-                System.out.println("There was a problem outputing to " + outputFilePath);
-                System.out.println("Output line was: " + outputLine);
-            }
-        }
-        
-        inputScanner.close();
-        
+
+        // Write to output file
         try {
+            outputFile.write(converter.getJsonText());
             outputFile.close();
         } catch (IOException e) {
-            System.out.println("Could not close file: " + outputFilePath);
+            System.out.println("There was a problem outputing to " + outputFilePath);
+            System.exit(1);
         }
-        
-        
-        // Print Success Message
-        System.out.println("Successfully converted " + inputFileName + " to " + outputFileName + "!");
+
+        if (noErrors) {
+            // Print Success Message
+            System.out.println("Successfully converted " + inputFileName + 
+                               " to " + outputFileName + " with no errors!");
+        }
+        else {
+            System.out.println("Successfully converted " + inputFileName + 
+                               " to " + outputFileName + ", but there was at least one"
+                               + " error converting a line!");
+        }
     }
 }
