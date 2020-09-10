@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import Helper.ContentType;
 import Helper.LineProcessingException;
 
 public class LineTextToJSONConverter {
@@ -30,6 +31,8 @@ public class LineTextToJSONConverter {
     private static final int HOURS_IN_DAY = 24;
     private static final int MIN_IN_HOUR = 60;
     
+    private static final int NAME_START_INDEX = 6;
+    
     private Set<String> participants = new HashSet<String>();
     private List<Message> messages = new ArrayList<Message>();
     
@@ -38,24 +41,42 @@ public class LineTextToJSONConverter {
     
     private Calendar currDate = Calendar.getInstance();
     
-    private Message lastMessage;
+    private String previousLine = null;
+    
+    private Message getLastMessage() {
+        if (messages.size() > 1) {
+            return messages.get(messages.size() - 1);
+        }
+        return null;
+    }
     
     public void processLine(String currLine) throws LineProcessingException {
         // figure out what type of line based on first word
         String firstWord = getFirstWord(currLine);
         
-        if (isIgnorableLine(firstWord)) {
-            //skip line, because there is no info in this that we need
-            return;
-        }
-        else if (isDateLine(firstWord)) {
+        if (isDateLine(firstWord)) {
             parseDate(currLine);
         }
-        else if (isTimeWord(firstWord)) {
-            
-        }
         else {
-            throw new LineProcessingException();
+            // append previous line to previous message content
+            if (previousLine != null) {
+               Message lastMessage = getLastMessage();
+               lastMessage.appendContent(previousLine);
+               previousLine = null;
+            }
+            
+            
+            if (isIgnorableLine(firstWord)) {
+                //skip line, because there is no info in this that we need
+                return;
+            } 
+            else if (isTimeWord(firstWord)) {
+                parseMessage(currLine);
+            }
+            else {
+                // save line for next line processing
+                previousLine = currLine;
+            }
         }
         
     }
@@ -116,6 +137,52 @@ public class LineTextToJSONConverter {
         } catch (NumberFormatException e) {
             return false;
         }
+    }
+    
+    private Calendar parseTime(String timeWord) throws LineProcessingException {
+        String hourString = timeWord.substring(HOUR_START_INDEX, HOUR_END_INDEX);
+        String minString = timeWord.substring(MIN_START_INDEX, MIN_END_INDEX);
+        
+        try {
+            int hour = Integer.parseInt(hourString);
+            int min = Integer.parseInt(minString);
+
+            Calendar time = Calendar.getInstance();
+            time.set(currDate.get(Calendar.YEAR), currDate.get(Calendar.MONTH),
+                     currDate.get(Calendar.DATE), hour, min, 0);
+            return time;
+        } catch (NumberFormatException e) {
+            throw new LineProcessingException();
+        }
+    }
+    
+    private void parseMessage(String messageLine) throws LineProcessingException {
+        Calendar messageTime = parseTime(getFirstWord(messageLine));
+        
+        /// find participant name by searching for second space char after time
+        int nameEndIndex = messageLine.length();
+        boolean foundSpace = false;
+        for (int i = 0; i < messageLine.length(); i++) {
+            if (messageLine.charAt(i) == ' ') {
+                if (foundSpace) {
+                    nameEndIndex = i;
+                    break;
+                }
+                else {
+                    foundSpace = true;
+                }
+            }
+        }
+        String participant = messageLine.substring(NAME_START_INDEX, nameEndIndex);
+        participants.add(participant);
+        
+        String content = messageLine.substring(nameEndIndex + 1);
+        
+        // parse type of content
+        ContentType contentType = Message.parseContentType(messageLine);
+        Message currMessage = new Message(messageTime, participant, content, contentType);
+        
+        messages.add(currMessage);
     }
     
     public String getJsonText() {
