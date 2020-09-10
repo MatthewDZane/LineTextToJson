@@ -1,7 +1,9 @@
 package Runner;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
@@ -13,18 +15,13 @@ public class ConverterRunner {
     public static void main(String[] args) {
         String inputFileName = "[LINE] Chat with Hinako Terasaki.txt";
         String inputFilePath = "src/InputFiles/" + inputFileName;
-        File inputFile;
-        Scanner inputScanner = null;
+        FileReader inputFile;
+        BufferedReader inputReader = null;
 
         // Open input file
         try {
-            inputFile = new File(inputFilePath);
-            inputScanner = new Scanner(inputFile); 
-            
-            // skip first 3 line
-            inputScanner.nextLine();
-            inputScanner.nextLine();
-            inputScanner.nextLine();
+            inputFile = new FileReader(inputFilePath);
+            inputReader = new BufferedReader (inputFile); 
         } catch (FileNotFoundException e) {
             System.out.println("File: " + inputFilePath + " not found");
             e.printStackTrace();
@@ -34,22 +31,34 @@ public class ConverterRunner {
         LineTextToJSONConverter converter = new LineTextToJSONConverter();
         boolean noErrors = true;
 
-        // Read each line in text file
-        for (int lineNumber = 0; inputScanner.hasNextLine(); lineNumber++) {
-            String currLine = inputScanner.nextLine();
-            
-            // Process line
-            try {
-                converter.processLine(currLine);
-            } catch (LineProcessingException e) {
-                System.out.println("Line " + lineNumber + ": \"" + currLine +
-                        "\" could not be processed" );
-                noErrors = false;
-                continue;
-            }          
-        }
+        try {
+            // skip first 3 line
+            inputReader.readLine();
+            inputReader.readLine();
+            inputReader.readLine();
 
-        inputScanner.close();
+
+            // Read each line in text file
+            String currLine = null;
+            for (int lineNumber = 0; (currLine = inputReader.readLine()) != null; lineNumber++) {
+
+                // Process line
+                try {
+                    converter.processLine(currLine);
+                } catch (LineProcessingException err) {
+                    System.out.println("Line " + lineNumber + ": \"" + currLine +
+                            "\" could not be processed" );
+                    noErrors = false;
+                    continue;
+                }          
+            }
+            
+            inputReader.close();
+        } catch (IOException e) {
+            System.out.println("There was a problem reading file: " + inputFilePath);
+            e.printStackTrace();
+            System.exit(1);
+        }
 
         // Open output file
         // Replace txt extension with json 
@@ -75,12 +84,12 @@ public class ConverterRunner {
         if (noErrors) {
             // Print Success Message
             System.out.println("Successfully converted " + inputFileName + 
-                               " to " + outputFileName + " with no errors!");
+                    " to " + outputFileName + " with no errors!");
         }
         else {
             System.out.println("Successfully converted " + inputFileName + 
-                               " to " + outputFileName + ", but there was at least one"
-                               + " error converting a line!");
+                    " to " + outputFileName + ", but there was at least one"
+                    + " error converting a line!");
         }
     }
 }

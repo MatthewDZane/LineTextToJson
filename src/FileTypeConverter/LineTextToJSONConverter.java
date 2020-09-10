@@ -136,6 +136,11 @@ public class LineTextToJSONConverter {
         }
         
         try {
+            for (int i = 0; i < hourString.length(); i++) {
+                Integer.parseInt(hourString.substring(i, i + 1));
+                Integer.parseInt(minString.substring(i, i + 1));
+            }
+            
             int hour = Integer.parseInt(hourString);
             int min = Integer.parseInt(minString);
 
@@ -168,11 +173,22 @@ public class LineTextToJSONConverter {
         
         /// find participant name by searching for second space char after time
         int nameEndIndex = messageLine.length();
+        boolean foundSpace = false;
         for (int i = firstWord.length() + 1; i < messageLine.length(); i++) {
             if (messageLine.charAt(i) == '\t') {
                 nameEndIndex = i;
                 break;
                
+            }
+            
+            if (messageLine.charAt(i) == ' ') {
+                if (foundSpace) {
+                    nameEndIndex = i;
+                    break;
+                }
+                else {
+                    foundSpace = true;
+                }
             }
         }
         

@@ -66,7 +66,7 @@ public class Message {
     }
     
     public void appendContent(String content) {
-        message += content;
+        message += "\n" + content;
     }
     
 }
