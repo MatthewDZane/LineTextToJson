@@ -5,5 +5,6 @@ public enum ContentType {
     VIDEO,
     STICKER,
     LINK,
-    TEXT
+    TEXT,
+    UNSENT
 }

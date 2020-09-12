@@ -30,11 +30,16 @@ public class LineTextToJSONConverter {
     
     private static final int HOURS_IN_DAY = 24;
     private static final int MIN_IN_HOUR = 60;
+    private static final int MILLISECONDS_IN_MIN = 60000;
     
     private static final int NAME_START_INDEX = 6;
     
     private Set<String> participants = new HashSet<String>();
     private List<Message> messages = new ArrayList<Message>();
+    
+    // used to handle messages with the same time stamp, by adding different
+    // seconds value.
+    private List<Message> messageGroup = new ArrayList<Message>();
     
     private Calendar saveDate;
     private Time saveTime;
@@ -42,6 +47,13 @@ public class LineTextToJSONConverter {
     private Calendar currDate = Calendar.getInstance();
     
     private String previousLine = null;
+    
+    private String chatOwner;
+    
+    public LineTextToJSONConverter(String chatOwnerIn) {
+        chatOwner = chatOwnerIn;
+        participants.add(chatOwner);
+    }
     
     private Message getLastMessage() {
         if (messages.size() > 1) {
@@ -56,6 +68,7 @@ public class LineTextToJSONConverter {
         
         if (isDateLine(firstWord)) {
             parseDate(currLine);
+            previousLine = null;
         }
         else {
             // append previous line to previous message content
@@ -113,7 +126,7 @@ public class LineTextToJSONConverter {
         String dayString = dateLine.substring(DAY_START_INDEX, DAY_END_INDEX);
         String yearString = dateLine.substring(YEAR_START_INDEX, YEAR_END_INDEX);
         try {
-            int month = Integer.parseInt(monthString);
+            int month = Integer.parseInt(monthString) - 1;
             int day = Integer.parseInt(dayString);
             int year = Integer.parseInt(yearString);
             
@@ -161,6 +174,8 @@ public class LineTextToJSONConverter {
             Calendar time = Calendar.getInstance();
             time.set(currDate.get(Calendar.YEAR), currDate.get(Calendar.MONTH),
                      currDate.get(Calendar.DATE), hour, min, 0);
+            int mod = (int)(time.getTimeInMillis() % 1000);
+            time.add(Calendar.MILLISECOND, -mod);
             return time;
         } catch (NumberFormatException e) {
             throw new LineProcessingException();
@@ -193,15 +208,48 @@ public class LineTextToJSONConverter {
         }
         
         String participant = messageLine.substring(NAME_START_INDEX, nameEndIndex);
-        participants.add(participant);
+        
         
         String content = messageLine.substring(nameEndIndex + 1);
         
         // parse type of content
-        ContentType contentType = Message.parseContentType(messageLine);
+        ContentType contentType;
+        if (participant.equals(Message.YOU_UNSENT_MESSAGE_MARKER)) {
+            contentType = ContentType.UNSENT;
+            participant = chatOwner;
+        }
+        else {         
+           contentType = Message.parseContentType(content);
+        }
+        participants.add(participant);
+        
         Message currMessage = new Message(messageTime, participant, content, contentType);
         
         messages.add(currMessage);
+        
+        
+        
+        // handle messages with same time stamp
+        if (messageGroup.size() == 0 || messageGroup.get(0).getSendTime().getTimeInMillis() == messageTime.getTimeInMillis()) {
+            messageGroup.add(currMessage);
+        } 
+        else {
+            adjustMessageTimeStamps();
+            messageGroup.clear();
+            messageGroup.add(currMessage);
+            
+            
+        }
+    }
+    
+    /**
+     *  Guaranteed that messageGroup will have at least one element.
+     */
+    private void adjustMessageTimeStamps() {     
+        int msDiff = MILLISECONDS_IN_MIN / messageGroup.size();
+        for (int i = 0; i < messageGroup.size(); i++) {
+            messageGroup.get(i).getSendTime().add(Calendar.MILLISECOND, msDiff * i);
+        }
     }
     
     public String getJsonText() {
@@ -238,12 +286,15 @@ public class LineTextToJSONConverter {
     private String getMessagesText() {
         String messagesText = "  \"messages\": [\n";
         
-        for (Message message : messages) {
+        for (int i = messages.size() - 1; i >= 0; i--) {
+            Message message = messages.get(i);
             messagesText += "    {\n";
             
             messagesText += "      \"sender_name\": \"" + message.getSender() + "\",\n";
             messagesText += "      \"timestamp_ms\": " + message.getSendTime().getTimeInMillis() + ",\n";
-            messagesText += "      \"content\": \"" + message.getContent() + "\",\n";
+            
+            // modify message for json format
+            messagesText += "      \"content\": \"" + getJsonString(message.getContent()) + "\",\n";
             messagesText += "      \"type\": \"Generic\"\n";
             
             messagesText += "    },\n";
@@ -257,5 +308,45 @@ public class LineTextToJSONConverter {
         messagesText += "  ]\n";
 
         return messagesText;
+    }
+    
+    private String getJsonString(String text) {
+        String jsonText = "";
+        
+        for (int i = 0; i < text.length(); i++) {
+            char currChar = text.charAt(i);
+            if (currChar == '"') {
+                jsonText += "\\";
+            }
+            else if (currChar == '\n') {
+                jsonText += "\\n";
+                continue;
+            }
+            jsonText += currChar;
+        }
+        
+        return jsonText;
+    }
+    
+    public void finish() {
+        adjustMessageTimeStamps();
+    }
+    
+    public boolean testSequentialTimes() {
+        for (int i = 0; i < messages.size() - 1; i++) {
+            long first = messages.get(i).getSendTime().getTimeInMillis();
+            long second = messages.get(i+1).getSendTime().getTimeInMillis();
+            
+            if (first >= second) {
+                System.out.println(i + " ," + messages.get(i).getMessage());
+                System.out.println(messages.get(i).getSendTime().getTime());
+                System.out.println(messages.get(i+1).getSendTime().getTime());
+                
+                return false;
+            }
+        }
+        
+        
+        return true;
     }
 }

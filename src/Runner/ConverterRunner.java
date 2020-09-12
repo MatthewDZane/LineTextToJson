@@ -13,8 +13,11 @@ import Helper.LineProcessingException;
 
 public class ConverterRunner {
     public static void main(String[] args) {
+        // Will try to make this part of program args
         String inputFileName = "[LINE] Chat with Hinako Terasaki.txt";
         String inputFilePath = "src/InputFiles/" + inputFileName;
+        String chatOwner = "Matthew Zane";
+        
         FileReader inputFile;
         BufferedReader inputReader = null;
 
@@ -28,7 +31,7 @@ public class ConverterRunner {
             System.exit(1);
         }
 
-        LineTextToJSONConverter converter = new LineTextToJSONConverter();
+        LineTextToJSONConverter converter = new LineTextToJSONConverter(chatOwner);
         boolean noErrors = true;
 
         try {
@@ -41,7 +44,6 @@ public class ConverterRunner {
             // Read each line in text file
             String currLine = null;
             for (int lineNumber = 0; (currLine = inputReader.readLine()) != null; lineNumber++) {
-
                 // Process line
                 try {
                     converter.processLine(currLine);
@@ -52,7 +54,7 @@ public class ConverterRunner {
                     continue;
                 }          
             }
-            
+            converter.finish();
             inputReader.close();
         } catch (IOException e) {
             System.out.println("There was a problem reading file: " + inputFilePath);
@@ -71,7 +73,7 @@ public class ConverterRunner {
             System.out.println("There was a problem opening file: " + outputFilePath);
             System.exit(1);
         }
-
+        
         // Write to output file
         try {
             outputFile.write(converter.getJsonText());
@@ -91,5 +93,7 @@ public class ConverterRunner {
                     " to " + outputFileName + ", but there was at least one"
                     + " error converting a line!");
         }
+        
+        System.out.print(converter.testSequentialTimes());
     }
 }
