@@ -3,12 +3,7 @@
 ## *"File Format Converter"*
 
 # Description:
-#    Converts a text file, containing chat logs, as outputted by the Line app,
-#    into a json format. The main purpose for creating this program was to
-#    convert Line text files in json files for the Entanglement project.
-#    (see https://github.com/MatthewDZane/Entanglement). For some types of text
-#    messages, like Photos, Videos, or Links, the actual message content is
-#    removed in order to not confuse the Chat Analyzer.
+    Converts a text file, containing chat logs, as outputted by the Line app, into a json format. The main purpose for creating this program was to convert Line text files in json files for the Entanglement project. (see https://github.com/MatthewDZane/Entanglement). For some types of text messages, like Photos, Videos, or Links, the actual message content is removed in order to not confuse the Chat Analyzer.
 
 # How to Use Line Text to Json
 
@@ -18,25 +13,25 @@
 
   | Step 0.1: Go to your desired chat and press the info button at the top right
 
-<img> src=./Examples/InfoButton.jpg
+<img src=./Examples/InfoButton.jpg />
 
   | Step 0.2: Press the "Other settings" button toward the bottom
 
-<img> src=./Examples/OtherSettingsButton.png
+<img src=./Examples/OtherSettingsButton.png />
 
   | Step 0.3: Press "Export chat history" and choose where you want to save the file
 
-<img> src=./Examples/ExportChatHistory.png
+<img src=./Examples/ExportChatHistory.png />
 
   On Desktop
 
   | Step 0.1: Go to you desired chat and click the info button at the top right
 
-<img> src=./Examples/DesktopInfoButton.png
+<img src=./Examples/DesktopInfoButton.png >/
 
   | Step 0.2: Click "Save chat" and choose where you want to save the file
 
-<img> src=./Examples/SaveChat.png
+<img src=./Examples/SaveChat.png />
 
 | Step 1: Move desired Line text file to the LineTextToJson/src/InputFiles/ directory
 
