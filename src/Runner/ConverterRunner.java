@@ -32,18 +32,26 @@ public class ConverterRunner {
         
         System.out.println("Successfully openned file: " + inputFileName);
         
-        LineTextToJSONConverter converter = new LineTextToJSONConverter(chatOwner);
-        boolean noErrors = true;
+        
 
         System.out.println("Reading file: " + inputFileName);
-        
+        LineTextToJSONConverter converter = null;
+        boolean noErrors = true;
         try {
             // skip first 3 line
             inputReader.readLine();
-            inputReader.readLine();
+            String secondLine = inputReader.readLine();
             inputReader.readLine();
 
-
+            try {
+                converter = new LineTextToJSONConverter(secondLine, chatOwner);
+            } catch (LineProcessingException e) {
+                // TODO Auto-generated catch block
+                System.out.println("File has wrong format. Error occured at line 2");
+                System.exit(1);
+            }
+            System.out.println("Chat log save on: " + converter.getSaveTime().getTime());
+            
             // Read each line in text file
             String currLine = null;
             for (int lineNumber = 0; (currLine = inputReader.readLine()) != null; lineNumber++) {
@@ -51,7 +59,7 @@ public class ConverterRunner {
                 try {
                     converter.processLine(currLine);
                 } catch (LineProcessingException err) {
-                    System.out.println("Line " + lineNumber + ": \"" + currLine +
+                    System.out.println("Line " + (lineNumber + 3) + ": \"" + currLine +
                             "\" could not be processed" );
                     noErrors = false;
                     continue;
