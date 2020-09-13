@@ -1,3 +1,5 @@
 bin/
-**/InputFiles
-**/OutputFiles
+InputFiles/
+!InputFiles/.gitkeep
+OutputFiles/
+!OutputFiles/.gitkeep
