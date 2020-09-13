@@ -49,8 +49,7 @@ in order to not confuse the Chat Analyzer.
 
 | Step 4: Access converted json file in the LineTextToJson/bin/OutputFiles directory
 
-# Now you have converted your Line text file to a json format! Thank you for
-# using this project!
+# Now you have converted your Line text file to a json format! Thank you for using this project!
 
 
 
