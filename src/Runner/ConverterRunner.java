@@ -14,7 +14,7 @@ public class ConverterRunner {
         // Will try to make this part of program args
         String inputFileName = args[0];
         String inputFilePath = "src/InputFiles/" + inputFileName;
-        String chatOwner = "Matthew Zane";
+        String chatOwner = args[1];
         
         FileReader inputFile;
         BufferedReader inputReader = null;
