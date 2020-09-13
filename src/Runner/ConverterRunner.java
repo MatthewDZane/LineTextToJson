@@ -1,12 +1,10 @@
 package Runner;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Scanner;
 
 import FileTypeConverter.LineTextToJSONConverter;
 import Helper.LineProcessingException;
@@ -14,13 +12,14 @@ import Helper.LineProcessingException;
 public class ConverterRunner {
     public static void main(String[] args) {
         // Will try to make this part of program args
-        String inputFileName = "[LINE] Chat with Hinako Terasaki.txt";
+        String inputFileName = args[0];
         String inputFilePath = "src/InputFiles/" + inputFileName;
         String chatOwner = "Matthew Zane";
         
         FileReader inputFile;
         BufferedReader inputReader = null;
 
+        System.out.println("Openning file: " + inputFileName);
         // Open input file
         try {
             inputFile = new FileReader(inputFilePath);
@@ -30,10 +29,14 @@ public class ConverterRunner {
             e.printStackTrace();
             System.exit(1);
         }
-
+        
+        System.out.println("Successfully openned file: " + inputFileName);
+        
         LineTextToJSONConverter converter = new LineTextToJSONConverter(chatOwner);
         boolean noErrors = true;
 
+        System.out.println("Reading file: " + inputFileName);
+        
         try {
             // skip first 3 line
             inputReader.readLine();
@@ -61,12 +64,15 @@ public class ConverterRunner {
             e.printStackTrace();
             System.exit(1);
         }
-
+        
+        System.out.println("Successfully read contents of file: " + inputFilePath);
         // Open output file
         // Replace txt extension with json 
         String outputFileName = inputFileName.substring(0, inputFileName.length() - 3) + "json";
         String outputFilePath = "src/OutputFiles/" + outputFileName;
         FileWriter outputFile = null;
+        
+        System.out.println("Converting file: " + inputFileName + " to file: " + outputFileName);
         try {
             outputFile = new FileWriter(outputFilePath);
         } catch (IOException e) {
@@ -94,6 +100,6 @@ public class ConverterRunner {
                     + " error converting a line!");
         }
         
-        System.out.print(converter.testSequentialTimes());
+        //System.out.print(converter.testSequentialTimes());
     }
 }
